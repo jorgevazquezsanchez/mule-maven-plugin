@@ -14,24 +14,32 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-              sh 'mvn clean install -DskipIntegrationTests=true'
+                configFileProvider([configFile(fileId: '4057b0ee-030f-42f3-9616-964c557a8752', variable: 'munit-settings')]) {
+                    sh 'mvn clean install -DskipIntegrationTests=true -s $munit-settings'
+                }
             }
         }
         stage('Deploy') {
             steps {
-              sh 'mvn deploy -DskipTests'
+                configFileProvider([configFile(fileId: '4057b0ee-030f-42f3-9616-964c557a8752', variable: 'munit-settings')]) {
+                    sh 'mvn deploy -DskipTests -s $munit-settings'
+                }
             }
         }
         stage('Packager IT') {
             steps {
-              sh 'mvn test -PpackagerIT'
+                configFileProvider([configFile(fileId: '4057b0ee-030f-42f3-9616-964c557a8752', variable: 'munit-settings')]) {
+                    sh 'mvn test -PpackagerIT -s $munit-settings'
+                }
             }
         }
         stage('Deployer IT') {
             steps {
-              withCredentials([usernamePassword(credentialsId: 'mmp-tests', passwordVariable: 'mmp-password', usernameVariable: 'mmp-user')]) {
-                  sh 'mvn test -PdeployerIT -Dusername=$mmp-user -Dpassword=$mmp-password'
-              }
+                configFileProvider([configFile(fileId: '4057b0ee-030f-42f3-9616-964c557a8752', variable: 'munit-settings')]) {
+                    withCredentials([usernamePassword(credentialsId: 'mmp-tests', passwordVariable: 'mmp-password', usernameVariable: 'mmp-user')]) {
+                        sh 'mvn test -PdeployerIT -Dusername=$mmp-user -Dpassword=$mmp-password -s $munit-settings'
+                    }
+                }
             }
         }
     }
